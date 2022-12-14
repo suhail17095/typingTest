@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <style>
+        body {
+            background-color: #646669;
+        }
+
+        .content {
+            display: flex;
+            flex-direction: column;
+            margin-top: 20px;
+            justify-content: center;
+            align-items: center;
+
+        }
+
+        .blur {
+            color: transparent;
+            text-shadow: 0 0 20px #000;
+        }
+
+        .heading {
+            color: rgb(214, 199, 199);
+        }
+
+        .text {
+            width: 40rem;
+            height: 20rem;
+            background-color: #646669;
+            padding: 20px;
+            text-align: left;
+            font-size: 2rem;
+            padding-top: 40px;
+            font: bold;
+            color: #939ba7;
+        }
+
+        .result {
+            text-align: left;
+            font-size: 2rem;
+            padding-top: 40px;
+            font: bold;
+            color:white;
+        }
+
+        .restart {
+            border-color: white;
+            color: #c4cbd5;
+            background-color: #646669;
+            margin-top: 1rem;
+            width: 6rem;
+            height: 3rem;
+            border-radius: 25px;
+        }
+        .current{
+            border-left: 1px solid black;
+        }
+    </style>
+</head>
+
+<body>
+    <h1 class="heading">Typing Test</h1>
+    <div class="content">
+        <h1 class="time">
+            60 s
+        </h1>
+        <div class="text">
+
+        </div>
+        <div class="result">
+
+        </div>
+        <button class="restart">
+            Restart
+        </button>
+    </div>
+    <script>
+        let url = "http://api.quotable.io/random";
+        let text = document.getElementsByClassName("text")[0];
+        let r = document.getElementsByClassName("restart")[0];
+        let time = document.getElementsByClassName("time")[0];
+        let span = document.getElementsByTagName("span");
+        let total_characters = 0;
+        let error_character = 0;
+        let myInterval;
+        let index = 0;
+        let audio=new Audio("click.wav");
+        let audio1=new Audio("error.mp3");
+        let flag = true;
+        let t = 60;
+        async function fetch_api() {
+            let response = await fetch(url);
+            let data = await response.json();
+            let a = data.content;
+            text.innerHTML = "";
+            let s;
+            for (let i = 0; i < a.length; i++) {
+                s = document.createElement("span");
+                s.innerHTML = a[i];
+                text.appendChild(s);
+            }
+        }
+        function keypressed(event) {
+            console.log(event);
+            if (flag) {
+                myInterval = setInterval(timer, 1000);
+                flag = false;
+            }
+            if (event.key!="Shift" && event.key!="CapsLock") {
+                span[index].classList.remove("current");
+                console.log(event.key);
+                if (event.key == "Backspace") {
+                    if (index != 0) {
+                        index--;
+                        if (span[index].style.color == "red") {
+                            error_character--;
+                        }
+                        else {
+                            total_characters--;
+                        }
+                        if (span[index].innerHTML == " ") {
+                            span[index].style.backgroundColor = "#646669";
+                        }
+                        else {
+                            span[index].style.color = "#939ba7";
+                        }
+                    }
+                }
+                else if (event.key == span[index].innerHTML) {
+                    span[index].style.color = "white";
+                    index++;
+                    total_characters++;
+                    audio.play();
+                }
+                else {
+                    if (span[index].innerHTML == " ") {
+                        span[index].style.backgroundColor = "red";
+                    }
+                    span[index].style.color = "red";
+                    index++;
+                    error_character++;
+                    audio1.play();
+                }
+                if (index == span.length) {
+                    index = 0;
+                    fetch_api();
+                }
+                if(index!=0){
+                span[index].classList.add("current");
+                }
+            }
+        }
+        function timer() {
+            time.innerHTML = t + " s";
+            t--;
+            if (t == -1) {
+                t = 60;
+                display_result();
+            }
+        }
+        function display_result() {
+
+            clearInterval(myInterval);
+            let result = document.getElementsByClassName("result")[0];
+            result.innerHTML = "";
+            const words = total_characters / 5;
+            let speed = Math.round((words - error_character));
+            let error_per = (error_character) / ((total_characters+error_character) * 100);
+            result.textContent = "Speed :" + speed + "WPM\r\n Accuracy:" + Math.floor(100 - error_per).toFixed(1) + "%";
+            document.removeEventListener("keydown", keypressed);
+        }
+        function restart() {
+            location.reload();
+        }
+        fetch_api();
+        document.addEventListener("keydown", keypressed);
+        r.addEventListener("click", restart);
+    </script>
+</body>
+
+</html>
